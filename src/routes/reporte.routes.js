@@ -3,6 +3,9 @@ const router = express.Router();
 const reporteController = require('../controllers/reporte.controllers.js');
 
 // Rutas para los reportes
+
+// Reportes de ingresos proyectados
+
 router.get('/reportes/ingresos-proyectados', reporteController.obtenerIngresosProyectados);
 router.get('/reportes/servicios-mas-solicitados', reporteController.obtenerServiciosMasSolicitados);
 router.get('/reportes/cotizaciones-por-estado', reporteController.obtenerCotizacionesPorEstado);
