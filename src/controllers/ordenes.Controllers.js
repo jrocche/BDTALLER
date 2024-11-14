@@ -29,7 +29,7 @@ exports.obtenerOrdenPorId = async (req, res) => {
 exports.crearOrden = async (req, res) => {
     try {
         const ordenData = req.body;
-        console.log('Datos recibidos:', ordenData); // Para debugging
+        console.log('Datos recibidos:', ordenData);
 
         // Validaciones básicas
         if (!ordenData.fecha_inicio || !ordenData.fecha_fin) {
@@ -50,8 +50,8 @@ exports.crearOrden = async (req, res) => {
             nombre_cliente: ordenData.nombre_cliente || '',
             id_empleado: ordenData.id_empleado || null,
             responsable: ordenData.responsable || '',
-            servicio: ordenData.servicio || '',
-            servicios_detalle: ordenData.servicios ? JSON.stringify(ordenData.servicios) : null
+            servicio: ordenData.servicios?.[0]?.nombre || '', // Tomar el primer servicio como principal
+            servicios_detalle: ordenData.servicios_detalle
         };
 
         const nuevaOrden = await Orden.crear(ordenParaCrear);
@@ -60,8 +60,7 @@ exports.crearOrden = async (req, res) => {
         console.error('Error detallado al crear orden:', error);
         res.status(500).json({ 
             message: 'Error al crear orden', 
-            error: error.message,
-            stack: error.stack // Solo para desarrollo
+            error: error.message
         });
     }
 };

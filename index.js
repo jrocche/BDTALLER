@@ -1,9 +1,10 @@
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
+const errorHandler = require("./src/middleware/errorHandler");
+const pool = require("./src/database/database");
 const app = express();
 require("dotenv").config();
-
 
 const authRoutes = require("./src/routes/auth");
 const usuarioRoutes = require("./src/routes/usuario.routes");
@@ -12,22 +13,17 @@ const ordenesRoutes = require("./src/routes/ordenes.routes");
 const servicioRoutes = require("./src/routes/servicio.routes");
 const cotizacionesRoutes = require("./src/routes/cotizaciones.routes");
 const herramientasRoutes = require("./src/routes/herramientas.routes");
-const reporteRoutes = require("./src/routes/reporte.routes"); // Asegúrate de que la ruta sea correcta
+const reporteRoutes = require("./src/routes/reporte.routes");
 const reportesOrdenesRoutes = require("./src/routes/reportesOrdenes.routes");
 const empleadoRoutes = require("./src/routes/empleado.routes");
 
-
-
-
-
 app.use(cors({
-    origin: '*', // En producción, deberías especificar el dominio exacto
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(morgan("dev"));
 app.use(express.json());
-
 
 app.use("/", authRoutes);
 app.use("/", usuarioRoutes);
@@ -40,21 +36,7 @@ app.use("/", reporteRoutes);
 app.use("/", reportesOrdenesRoutes);
 app.use("/api", empleadoRoutes);
 
-
-
-const PORT = process.env.PORT || 5000;
-
-try {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-} catch (error) {
-  console.error("Error al iniciar la aplicación:", error);
-}
-
-
-// Añade esta ruta después de configurar cors
-app.get('/test', async (req, res) => {
+app.get('/test', async (req, res, next) => {
   try {
     const result = await pool.query('SELECT NOW()');
     res.json({ 
@@ -62,10 +44,29 @@ app.get('/test', async (req, res) => {
       dbTime: result.rows[0].now
     });
   } catch (error) {
-    res.status(500).json({ 
-      error: 'Error conectando a la base de datos',
-      details: error.message
-    });
+    next(error);
   }
+});
+
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    message: "Ruta no encontrada"
+  });
+});
+
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Error interno del servidor",
+    error: process.env.NODE_ENV === 'development' ? err : {}
+  });
+});
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
 

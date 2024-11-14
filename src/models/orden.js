@@ -23,26 +23,37 @@ class Orden {
 
     static async crear(ordenData) {
         try {
+            // Asegurarse que los datos cumplan con las restricciones de la base de datos
+            const serviciosDetalle = ordenData.servicios_detalle ? 
+                (typeof ordenData.servicios_detalle === 'string' ? 
+                    ordenData.servicios_detalle : 
+                    JSON.stringify(ordenData.servicios_detalle)
+                ) : null;
+
+            // Normalizar el estado de prioridad
+            const prioridad = ordenData.prioridad.charAt(0).toUpperCase() + 
+                             ordenData.prioridad.slice(1).toLowerCase();
+
             const result = await db.query(
                 `INSERT INTO taller.ordenes_trabajo 
                 (fecha_inicio, fecha_fin, estado, costo_total, prioridad, 
                 modelovehiculo, modo_pago, nombre_cliente, id_empleado, 
                 responsable, servicio, servicios_detalle) 
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb) 
                 RETURNING *`,
                 [
                     ordenData.fecha_inicio,
                     ordenData.fecha_fin,
-                    ordenData.estado,
+                    ordenData.estado.toLowerCase(),
                     ordenData.costo_total,
-                    ordenData.prioridad,
+                    prioridad,
                     ordenData.modelovehiculo,
                     ordenData.modo_pago,
                     ordenData.nombre_cliente,
                     ordenData.id_empleado,
                     ordenData.responsable,
                     ordenData.servicio,
-                    ordenData.servicios_detalle
+                    serviciosDetalle
                 ]
             );
             return result.rows[0];
